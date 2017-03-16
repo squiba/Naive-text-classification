@@ -1,10 +1,14 @@
 #+TITLE: Text Classification
 #+AUTHOR: Bhupendra Kumar Agarwal
 #+DATE: 
+#+STARTUP: inlineimages
 
 ** Requirements
 - python3
 - sklearn (machine learning models)
 - [[https://pythonhosted.org/joblib/persistence.html][joblib]] ( save the models on disk)
 
-See [[text-classification.ipynb]] for a classification using Naive Bayes.
+See [[text-classification.ipynb]] for a classification using Naive Bayes.Performance of various classifiers
+[[perfirmance.png]]
+Note: Hyper-parameters are not tuned for any of the models. Moreover accuracy depends on type of features selected,
+train-test set partition overfitting etc.
