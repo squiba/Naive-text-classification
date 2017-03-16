@@ -4,10 +4,6 @@
 
 ** Requirements
 - python3
-- scikit-learn (machine learning models)
+- sklearn (machine learning models)
 - [[https://pythonhosted.org/joblib/persistence.html][joblib]] ( save the models on disk)
 
-
-** Installation
-
-To read the implementation for naive bayes implementation refer to [[https://github.com/scikit-learn/scikit-learn/blob/14031f6/sklearn/naive_bayes.py#L606][this file in scikit-learn]].

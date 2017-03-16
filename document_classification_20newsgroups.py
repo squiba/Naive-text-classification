@@ -1,3 +1,11 @@
+from __future__ import print_function
+"""
+modified version
+1 specified data_home to load the dataset
+2 support to save and restore the models
+
+"""
+
 
 """
 ======================================================
@@ -23,8 +31,9 @@ The bar plot indicates the accuracy, training time (normalized) and test time
 #         Lars Buitinck
 # License: BSD 3 clause
 
-from __future__ import print_function
 
+
+import os
 import logging
 import numpy as np
 from optparse import OptionParser
@@ -49,6 +58,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.extmath import density
 from sklearn import metrics
 
+import joblib
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,
@@ -84,6 +94,13 @@ op.add_option("--filtered",
               help="Remove newsgroup information that is easily overfit: "
                    "headers, signatures, and quoting.")
 
+op.add_option("--save",
+              action="store_true", dest="save",
+              help = "save the model in 'models' directory.")
+op.add_option("--restore",
+              action="store_true", dest="restore",
+              help = "restore the models from models/ directory.")
+
 (opts, args) = op.parse_args()
 if len(args) > 0:
     op.error("this script takes no arguments.")
@@ -114,11 +131,11 @@ else:
 print("Loading 20 newsgroups dataset for categories:")
 print(categories if categories else "all")
 
-data_train = fetch_20newsgroups(subset='train', categories=categories,
+data_train = fetch_20newsgroups(data_home = "scikit_learn_data/", subset='train', categories=categories,
                                 shuffle=True, random_state=42,
                                 remove=remove)
 
-data_test = fetch_20newsgroups(subset='test', categories=categories,
+data_test = fetch_20newsgroups(data_home = "scikit_learn_data/", subset='test', categories=categories,
                                shuffle=True, random_state=42,
                                remove=remove)
 print('data loaded')
@@ -137,7 +154,7 @@ print("%d documents - %0.3fMB (training set)" % (
     len(data_train.data), data_train_size_mb))
 print("%d documents - %0.3fMB (test set)" % (
     len(data_test.data), data_test_size_mb))
-print("%d categories" % len(categories))
+# print("%d categories" % len(categories))
 print()
 
 # split a training set and a test set
@@ -197,14 +214,26 @@ def trim(s):
 
 ###############################################################################
 # Benchmark classifiers
-def benchmark(clf):
+def benchmark(clf,name):
     print('_' * 80)
-    print("Training: ")
-    print(clf)
-    t0 = time()
-    clf.fit(X_train, y_train)
-    train_time = time() - t0
-    print("train time: %0.3fs" % train_time)
+
+    if not opts.restore:
+        print("Training: ")
+        print(clf)
+        t0 = time()
+        clf.fit(X_train, y_train)
+        train_time = time() - t0
+        print("train time: %0.3fs" % train_time)
+        
+    clf_path = "models/%s/"%name
+    if opts.save:
+        if not os.path.exists(clf_path):
+            os.makedirs(clf_path)
+        joblib.dump(clf,clf_path+"model.pkl")
+        
+    if opts.restore:
+        clf = joblib.load(clf_path+"model.pkl")
+        train_time = 0
 
     t0 = time()
     pred = clf.predict(X_test)
@@ -248,35 +277,35 @@ for clf, name in (
         (RandomForestClassifier(n_estimators=100), "Random forest")):
     print('=' * 80)
     print(name)
-    results.append(benchmark(clf))
+    results.append(benchmark(clf,name))
 
 for penalty in ["l2", "l1"]:
     print('=' * 80)
     print("%s penalty" % penalty.upper())
     # Train Liblinear model
     results.append(benchmark(LinearSVC(loss='l2', penalty=penalty,
-                                            dual=False, tol=1e-3)))
+                                            dual=False, tol=1e-3), name= "LinearSVC%s"%penalty.upper()))
 
     # Train SGD model
     results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                           penalty=penalty)))
+                                           penalty=penalty), name="SGDClassifier%s"%penalty.upper()))
 
 # Train SGD with Elastic Net penalty
 print('=' * 80)
 print("Elastic-Net penalty")
 results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                       penalty="elasticnet")))
+                                       penalty="elasticnet"), name = "SGDClassifierelasticnet"))
 
 # Train NearestCentroid without threshold
 print('=' * 80)
 print("NearestCentroid (aka Rocchio classifier)")
-results.append(benchmark(NearestCentroid()))
+results.append(benchmark(NearestCentroid(), name="NearestCentroid"))
 
 # Train sparse Naive Bayes classifiers
 print('=' * 80)
 print("Naive Bayes")
-results.append(benchmark(MultinomialNB(alpha=.01)))
-results.append(benchmark(BernoulliNB(alpha=.01)))
+results.append(benchmark(MultinomialNB(alpha=.01),name = "MultinomialNB"))
+results.append(benchmark(BernoulliNB(alpha=.01),name = "BernoulliNB"))
 
 print('=' * 80)
 print("LinearSVC with L1-based feature selection")
@@ -285,7 +314,7 @@ print("LinearSVC with L1-based feature selection")
 results.append(benchmark(Pipeline([
   ('feature_selection', LinearSVC(penalty="l1", dual=False, tol=1e-3)),
   ('classification', LinearSVC())
-])))
+]), name = "LinearSVC_L1feature"))
 
 # make some plots
 
