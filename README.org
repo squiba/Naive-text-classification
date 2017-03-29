@@ -13,3 +13,5 @@ See [[text-classification.ipynb]] for a classification using Naive Bayes.
 Note: Hyper-parameters are not tuned for any of the models. Moreover accuracy depends on type of features selected,
 train-test set partition overfitting etc.
 - all the features ( more than 1000K) were taken for all models, As expected KNN performed very poorly. 
+
+[[http://sphweb.bumc.bu.edu/otlt/mph-modules/bs/bs704_probability/bs704_probability6.html][Bayes theorem]]
